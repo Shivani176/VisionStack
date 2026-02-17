@@ -156,16 +156,12 @@ Hardware:
 ================================================================================
 
 Student: Shivani Kalal
-Project: Computer Vision - Object Detection & HOI Analysis
 Date: November 17, 2025
 
-For questions:
-- Review detailed code comments in notebooks
-- Read methodology sections in report PDFs
-- Refer to course lecture materials
 
 References:
 - Liu et al. "SSD: Single Shot MultiBox Detector" (2016)
 - D2L Banana Dataset
 - PyTorch Documentation (torchvision.ops.nms)
+
 
