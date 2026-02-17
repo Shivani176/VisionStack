@@ -1,11 +1,10 @@
 ================================================================================
-                   COMPUTER VISION PROJECT 3
+                            VisionStack
         Object Detection and Human-Object Interaction Analysis
 ================================================================================
 
-Student: Shivani Kalal
+name: Shivani Kalal
 Date: November 17, 2025
-Course: Computer Vision
 
 ================================================================================
                         PROJECT OVERVIEW
@@ -163,5 +162,6 @@ References:
 - Liu et al. "SSD: Single Shot MultiBox Detector" (2016)
 - D2L Banana Dataset
 - PyTorch Documentation (torchvision.ops.nms)
+
 
 
