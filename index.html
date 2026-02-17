@@ -1,0 +1,1237 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VisionStack: Object Detection and Human–Object Interaction Analysis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --accent: #0066cc;
+      --bg: #f8f9fa;
+      --card-bg: #e4daca;
+      --border: #dddddd;
+      --text-main: #222222;
+      --text-muted: #555555;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.5rem 1.5rem;
+    }
+
+    header .title {
+      font-weight: 600;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--accent);
+      padding-bottom: 0.1rem;
+      border-bottom: 1px solid transparent;
+    }
+
+    nav a:hover {
+      border-bottom-color: var(--accent);
+    }
+
+    main {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1rem 3rem;
+    }
+
+    .paper-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.7rem;
+    }
+
+    .meta {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    section {
+      margin-bottom: 2.25rem;
+      padding-top: 3rem;    /* anchor offset for sticky header */
+      margin-top: -3rem;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      margin-bottom: 0.75rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h4 {
+      font-size: 1rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.4rem;
+    }
+
+    p {
+      margin: 0.4rem 0;
+    }
+
+    ul, ol {
+      margin: 0.4rem 0 0.6rem;
+      padding-left: 1.3rem;
+    }
+
+    code, pre, blockquote {
+      background: #f3f3f3;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    blockquote {
+      margin: 0.75rem 0;
+      padding: 0.75rem 1rem;
+      border-left: 3px solid var(--border);
+    }
+
+    pre {
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1rem;
+      font-size: 0.9rem;
+      background: var(--card-bg);
+    }
+
+    caption {
+      text-align: left;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    thead th {
+      background: #f1f1f1;
+    }
+
+    figure {
+      margin: 1.2rem auto;
+      text-align: center;
+      max-width: 100%;
+    }
+
+    figure img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    figcaption {
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .small-text {
+      font-size: 0.9rem;
+    }
+
+    .back-to-top {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .back-to-top a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .back-to-top a:hover {
+      text-decoration: underline;
+    }
+
+    /* simple side-by-side layout for Part 1 own images */
+    .figure-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .figure-row figure {
+      flex: 1 1 260px;
+    }
+  </style>
+</head>
+<body id="top">
+
+<header>
+  <div class="title">VisionStack</div>
+  <nav>
+    <a href="#part1">Part 1: Object Detection</a>
+    <a href="#part2">Part 2: NMS</a>
+    <a href="#introduction">Part 3: HOI Analysis</a>
+    <a href="#dataset">Dataset</a>
+    <a href="#model-prompt">Model &amp; Prompt</a>
+    <a href="#evaluation-metrics">Metrics</a>
+    <a href="#overall-results">Overall Results</a>
+    <a href="#failure-analysis">Failures</a>
+    <a href="#improvement-attempts">Improvements</a>
+    <a href="#discussion">Discussion</a>
+    <a href="#conclusion">Conclusion</a>
+  </nav>
+</header>
+
+<main>
+  <div class="paper-header">
+    <h1>VisionStack: Object Detection and Human–Object Interaction Analysis</h1>
+    <div class="meta">
+      <div>Shivani Kalal</div>
+      <div>November 16, 2025</div>
+    </div>
+  </div>
+
+  <!-- ==================== PART 1: LIGHTWEIGHT SSD ==================== -->
+  <section id="part1">
+    <h2>Part 1: Lightweight Object Detection (SSD)</h2>
+
+    <h3>Setup</h3>
+    <p>
+      I implemented a small SSD with two feature maps (32×32 and 16×16), multi-scale anchors,
+      and a loss that combines cross-entropy for class scores and Smooth L1 for box offsets
+      (with hard-negative mining). The model is trained on the D2L banana dataset
+      (1000 train / 100 val), with input size 256×256, Adam (learning rate 1e-3), and 20 epochs.
+      Boxes are properly scaled after resizing.
+    </p>
+
+    <h3>Training Curves</h3>
+    <figure>
+      <img src="Part1_OD_files/training_curves.png" alt="Training and validation loss curves">
+      <figcaption>
+        Training/validation losses over 20 epochs.
+        <strong>Left:</strong> total loss.
+        <strong>Middle:</strong> classification loss.
+        <strong>Right:</strong> bounding-box loss.
+        All curves decrease steadily; no major overfitting is observed.
+      </figcaption>
+    </figure>
+
+    <h3>Sample Detections (Validation Set)</h3>
+    <figure>
+      <img src="Part1_OD_files/sample_detections.png" alt="Sample validation detections on banana dataset">
+      <figcaption>
+        Five validation images with detections. Green dashed = ground truth; red solid = predictions.
+        The model localizes bananas with high confidence across varied backgrounds and scales.
+      </figcaption>
+    </figure>
+
+    <h3>Own Images: Success &amp; Failure Cases</h3>
+    <p>
+      <strong>Trends.</strong>
+      The training curves show steady drops in total, classification, and box losses; validation
+      tracks training closely, indicating stable learning.
+    </p>
+    <p>
+      <strong>Qualitative results.</strong>
+      On the validation set, boxes are tight and confidences high for most images.
+    </p>
+    <p>
+      <strong>Failures.</strong>
+      On personal test images (Figure&nbsp;1), the model sometimes misses bananas. Common reasons include
+      unusual lighting or pose, partial occlusions, very large or very small scale compared to
+      training anchors, or domain shift from the training set. Lowering the confidence threshold,
+      adding augmentations (lighting/pose), or refining anchor scales can mitigate such misses.
+    </p>
+
+    <div class="figure-row">
+      <figure>
+        <img src="Part1_OD_files/banana_img2_success.png" alt="Successful detection on personal banana image">
+        <figcaption>
+          Successful detection (confidence ≈ 0.98) in a cluttered fruit scene.
+        </figcaption>
+      </figure>
+      <figure>
+        <img src="Part1_OD_files/banana_img1_failure.png" alt="Failure case on personal banana image">
+        <figcaption>
+          Failure case: no detection despite a visible banana.
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="back-to-top"><a href="#top">↑ Back to top</a></div>
+  </section>
+
+<section id="part2">
+  <h2>Part 2: Non-Maximum Suppression (NMS)</h2>
+
+  <h3>Introduction</h3>
+  <p>
+    Non-Maximum Suppression (NMS) is an essential post-processing step in object detection.
+    After the SSD model from Part 1 generates predictions, it typically produces many overlapping
+    bounding boxes for the same object, each with different confidence scores. NMS helps clean up
+    these redundant detections by keeping only the most confident box and removing (suppressing)
+    overlapping boxes. This part implements a custom NMS algorithm and compares it with PyTorch's
+    built-in implementation.
+  </p>
+
+  <h3>Implementation</h3>
+
+  <h4>IoU (Intersection over Union) Calculation</h4>
+  <p>
+    The first step in NMS is calculating how much two boxes overlap. Intersection over Union (IoU)
+    measures the overlap between two bounding boxes by dividing their intersection area by their
+    union area. The implementation uses the <code>xyxy</code> format
+    (<code>x1, y1, x2, y2</code>):
+  </p>
+
+  <pre><code class="language-python">def iou_xyxy(box, boxes, eps=1e-6):
+    # Find intersection coordinates
+    x1 = torch.max(box[0], boxes[:, 0])
+    y1 = torch.max(box[1], boxes[:, 1])
+    x2 = torch.min(box[2], boxes[:, 2])
+    y2 = torch.min(box[3], boxes[:, 3])
+    
+    # Calculate intersection area
+    inter = (x2 - x1).clamp(min=0) * (y2 - y1).clamp(min=0)
+    
+    # Calculate union area
+    area1 = (box[2] - box[0]) * (box[3] - box[1])
+    area2 = (boxes[:, 2] - boxes[:, 0]) * \
+            (boxes[:, 3] - boxes[:, 1])
+    union = area1 + area2 - inter
+    
+    return inter / (union + eps)</code></pre>
+
+  <p>
+    The function computes IoU between one reference box and multiple other boxes.
+    The small epsilon value prevents division by zero.
+  </p>
+
+  <h4>Custom NMS Algorithm</h4>
+  <p>The custom NMS implementation follows a greedy approach:</p>
+
+  <pre><code class="language-python">def my_nms(boxes, scores, iou_thresh=0.5):
+    if boxes.numel() == 0:
+        return torch.empty(0, dtype=torch.long)
+    
+    # Sort boxes by confidence score (highest first)
+    order = scores.argsort(descending=True)
+    keep = []
+    
+    while order.numel() &gt; 0:
+        # Keep the highest scoring box
+        i = order[0].item()
+        keep.append(i)
+        
+        if order.numel() == 1:
+            break
+        
+        # Calculate IoU with remaining boxes
+        ious = iou_xyxy(boxes[i], boxes[order[1:]])
+        
+        # Keep only boxes with IoU &lt;= threshold
+        remain = torch.where(ious &lt;= iou_thresh)[0] + 1
+        order = order[remain]
+    
+    return torch.tensor(keep, dtype=torch.long)</code></pre>
+
+  <p>The algorithm works as follows:</p>
+  <ol>
+    <li>Sort all boxes by their confidence scores in descending order</li>
+    <li>Select the box with the highest score and add it to the keep list</li>
+    <li>Calculate IoU between this box and all remaining boxes</li>
+    <li>Remove (suppress) boxes that have IoU greater than the threshold</li>
+    <li>Repeat until no boxes remain</li>
+  </ol>
+
+  <h4>Unit Testing</h4>
+  <p>
+    Three unit tests verify the correctness of the custom NMS implementation
+    against PyTorch's <code>torchvision.ops.nms()</code>:
+  </p>
+
+  <p><strong>Test 1: Two Overlapping Boxes</strong></p>
+  <ul>
+    <li>Box 0: [10, 10, 50, 50], score = 0.9</li>
+    <li>Box 1: [15, 15, 55, 55], score = 0.8</li>
+    <li>IoU = 0.620 (boxes overlap significantly)</li>
+    <li>Result: Both implementations keep box [0], suppress box 1</li>
+  </ul>
+
+  <p><strong>Test 2: Two Non-Overlapping Boxes</strong></p>
+  <ul>
+    <li>Box 0: [10, 10, 30, 30], score = 0.9</li>
+    <li>Box 1: [100, 100, 120, 120], score = 0.8</li>
+    <li>Result: Both implementations keep [0, 1] (no suppression needed)</li>
+  </ul>
+
+  <p><strong>Test 3: Identical Boxes</strong></p>
+  <ul>
+    <li>Box 0: [20, 20, 60, 60], score = 0.95</li>
+    <li>Box 1: [20, 20, 60, 60], score = 0.85</li>
+    <li>IoU = 1.000 (perfect overlap)</li>
+    <li>Result: Both implementations keep box [0] (higher score)</li>
+  </ul>
+
+  <p>
+    All three tests passed with identical results from both implementations,
+    confirming the correctness of the custom NMS.
+  </p>
+
+  <h3>Results</h3>
+
+  <h4>Before and After NMS Visualization</h4>
+
+  <figure>
+    <!-- adjust the path if your image is in a folder, e.g. Part2_files/Part2_nms_10_3.png -->
+    <img src="Part2_nms_10_3.png" alt="Before and after NMS on a complex fruit scene">
+    <figcaption>
+      Before and after NMS on a complex fruit scene.
+      <strong>Left:</strong> Before NMS shows 50 overlapping orange boxes cluttering the image.
+      <strong>Middle:</strong> After PyTorch NMS keeps only 3 clean red boxes with confidence scores.
+      <strong>Right:</strong> After custom NMS produces identical 3 green boxes, demonstrating perfect
+      agreement between implementations.
+    </figcaption>
+  </figure>
+
+  <p>
+    The figure above shows a complex test case with multiple bananas in a fruit arrangement.
+    Before NMS, the model generates 50 candidate boxes with scores ranging from 0.301 to 0.997.
+    These boxes heavily overlap, making it difficult to see the actual detections. After applying
+    NMS with an IoU threshold of 0.5, both implementations reduce the detections to just 3 boxes,
+    each corresponding to a distinct banana. The kept boxes have indices [45, 0, 30] with scores
+    [0.997, 0.510, 0.381].
+  </p>
+
+  <figure>
+    <img src="Part2_nms_10_5.png" alt="Before and after NMS on a simple single-banana image">
+    <figcaption>
+      Before and after NMS on a simple single-banana image. All three panels show identical
+      results since only one detection was made. Before NMS: 1 box (orange). After PyTorch NMS:
+      1 box (red). After custom NMS: 1 box (green). All show the same detection with confidence 0.57.
+    </figcaption>
+  </figure>
+
+  <p>
+    The second figure demonstrates a simpler case with only one banana visible. The model generates
+    just 1 detection with confidence 0.569. Since there are no overlapping boxes, NMS has nothing
+    to suppress, and all three panels show identical results. This validates that NMS correctly
+    handles edge cases where suppression is not needed.
+  </p>
+
+  <h4>Validation Set Results</h4>
+
+  <figure>
+    <img src="Part2_nms_8_1.png" alt="Five sample detections from the validation set after NMS">
+    <figcaption>
+      Five sample detections from the validation set after NMS. Green dashed boxes show ground truth,
+      red solid boxes show predictions. The model successfully detects bananas across varied
+      backgrounds, lighting conditions, and scales. Confidence scores are high (1.00 for most cases),
+      indicating strong model performance.
+    </figcaption>
+  </figure>
+
+  <p>
+    The validation examples show that the SSD model from Part 1 combined with NMS produces reliable
+    detections in diverse scenarios.
+  </p>
+
+  <h3>Comparison with PyTorch NMS</h3>
+  <p>
+    The custom NMS implementation was rigorously compared against PyTorch's
+    <code>torchvision.ops.nms()</code> function. The comparison included:
+  </p>
+  <ul>
+    <li><strong>Unit tests:</strong> All 3 test cases produced identical results</li>
+    <li><strong>Real images:</strong>
+      <ul>
+        <li>Image 1 (50 boxes): Both kept boxes [45, 0, 30]</li>
+        <li>Image 2 (1 box): Both kept box [0]</li>
+      </ul>
+    </li>
+    <li><strong>Output format:</strong> Both return the same indices in the same order</li>
+    <li><strong>Numerical precision:</strong> No floating-point differences observed</li>
+  </ul>
+
+  <p><strong>Conclusion:</strong> There is <strong>zero difference</strong> in the algorithmic output
+    between the custom implementation and PyTorch's NMS. Both use the same greedy algorithm and
+    produce bit-exact identical results. The only difference lies in computational efficiency:
+  </p>
+  <ul>
+    <li><strong>PyTorch NMS:</strong> Implemented in C++/CUDA for maximum speed</li>
+    <li><strong>Custom NMS:</strong> Pure Python/PyTorch for educational clarity</li>
+    <li><strong>Functionality:</strong> Completely identical</li>
+  </ul>
+  <p>
+    The custom implementation successfully replicates PyTorch's highly-optimized algorithm,
+    demonstrating a thorough understanding of the NMS mechanism.
+  </p>
+
+  <h3>Purpose of NMS</h3>
+
+  <h4>Why NMS is Necessary</h4>
+  <p>
+    Object detectors like SSD predict bounding boxes at multiple locations and scales. For each
+    object in the image, the detector typically generates many candidate boxes with varying
+    confidence scores. Without post-processing, a single banana might have 10–20 overlapping
+    boxes, making the output cluttered and unusable.
+  </p>
+  <p>NMS solves this problem by:</p>
+  <ol>
+    <li>Identifying the highest-confidence detection for each object</li>
+    <li>Removing redundant detections that overlap significantly (high IoU)</li>
+    <li>Producing clean, non-overlapping results that are easier to interpret</li>
+  </ol>
+
+  <h4>How NMS Works</h4>
+  <p>The NMS algorithm follows these steps:</p>
+  <ol>
+    <li><strong>Sort by confidence:</strong> Arrange all boxes by their confidence scores (highest first)</li>
+    <li><strong>Select best box:</strong> Take the highest-scoring box and mark it as kept</li>
+    <li><strong>Calculate overlap:</strong> Compute IoU between this box and all remaining boxes</li>
+    <li><strong>Suppress overlaps:</strong> Remove boxes with IoU above threshold (typically 0.5)</li>
+    <li><strong>Repeat:</strong> Continue with remaining boxes until none are left</li>
+  </ol>
+  <p>
+    The IoU threshold controls how aggressive the suppression is. A lower threshold (e.g., 0.3)
+    suppresses more boxes, while a higher threshold (e.g., 0.7) is more lenient.
+  </p>
+
+  <h3>Limitations of NMS</h3>
+
+  <h4>Cannot Handle Overlapping Objects</h4>
+  <p>
+    NMS assumes that overlapping boxes detect the same object. When multiple objects genuinely
+    overlap (such as people in a crowd or fruits stacked together), NMS will incorrectly suppress
+    valid detections. For example, two bananas touching each another might be reduced to a
+    single detection.
+  </p>
+
+  <h4>Fixed IoU Threshold</h4>
+  <p>
+    The IoU threshold must be manually tuned for each dataset. There is no universal value that
+    works for all scenarios:
+  </p>
+  <ul>
+    <li>Too low (0.3): Suppresses valid detections, reducing recall</li>
+    <li>Too high (0.7): Keeps duplicate boxes, increasing false positives</li>
+    <li>Must be tuned on a validation set for optimal performance</li>
+  </ul>
+
+  <h4>Computational Complexity</h4>
+  <p>
+    Standard NMS has O(n²) time complexity, where <em>n</em> is the number of detections. For models
+    generating thousands of proposals, this becomes a bottleneck. Although GPU implementations help,
+    NMS remains one of the slower post-processing steps.
+  </p>
+
+  <h4>Fails with Heavy Occlusion</h4>
+  <p>
+    When objects are heavily occluded, the model might produce multiple partial detections. NMS
+    might suppress all of them, leaving the object undetected. This is particularly problematic in
+    crowded scenes.
+  </p>
+
+  <h4>Greedy Algorithm Limitations</h4>
+  <p>
+    NMS makes locally optimal decisions without considering the global picture. Once a box is kept,
+    the decision cannot be reconsidered. This can lead to suboptimal results when a slightly
+    misaligned high-confidence box suppresses a better-aligned lower-confidence box.
+  </p>
+
+  <h4>Class-Agnostic Issues</h4>
+  <p>
+    Basic NMS treats all detections equally regardless of their predicted class. In multi-class
+    scenarios, a high-confidence “apple” detection might suppress a lower-confidence “banana”
+    detection. One common solution is to apply NMS separately for each class.
+  </p>
+
+  <h3>Alternative Approaches</h3>
+  <p>Several improved variants address NMS limitations:</p>
+  <ul>
+    <li><strong>Soft-NMS:</strong> Reduces confidence scores instead of removing boxes, allowing overlapping objects to survive</li>
+    <li><strong>Adaptive NMS:</strong> Adjusts IoU threshold based on object density in different regions</li>
+    <li><strong>Learning-based NMS:</strong> Uses neural networks to learn optimal suppression strategies</li>
+  </ul>
+  <p>
+    These approaches offer better performance in crowded scenes but add computational overhead.
+  </p>
+
+  <h3>Conclusion</h3>
+  <p>
+    This part successfully implemented a custom Non-Maximum Suppression algorithm and verified its
+    correctness against PyTorch's implementation. The results demonstrate:
+  </p>
+  <ul>
+    <li><strong>Correctness:</strong> Custom NMS produces identical results to PyTorch across all test cases</li>
+    <li><strong>Effectiveness:</strong> NMS successfully reduces 50 overlapping boxes to 3 clean detections</li>
+    <li><strong>Edge cases:</strong> Properly handles scenarios with no overlapping boxes</li>
+    <li><strong>Understanding:</strong> Identified key limitations including inability to handle truly overlapping objects, fixed thresholds, and greedy decision-making</li>
+  </ul>
+
+  <div class="back-to-top"><a href="#top">↑ Back to top</a></div>
+</section>
+
+
+
+
+  <!-- ==================== PART 3: HOI ANALYSIS ==================== -->
+
+  <section id="introduction">
+    <h2>Part 3: Human–Object Interaction Analysis using Vision-Language Models</h2>
+    <h3>Introduction</h3>
+    <p>
+      This report presents a zero-shot Human-Object Interaction (HOI) detection task using
+      Claude Sonnet 4, a Vision-Language Model. The objective is to identify interactions
+      between humans and objects in images from the HICO-DET dataset, analyze failure
+      cases, and improve performance through better prompting strategies.
+    </p>
+  </section>
+
+  <section id="dataset">
+    <h2>Dataset</h2>
+    <p>
+      The experiment used 20 randomly sampled images from the HICO-DET test set.
+      Each image contains ground truth HOI annotations in the format:
+      <code>&lt;verb object&gt;</code> (e.g., <code>ride bicycle</code>, <code>hold cup</code>).
+    </p>
+  </section>
+
+  <section id="model-prompt">
+    <h2>Model and Prompt Design</h2>
+    <p>
+      Claude Sonnet 4 was used with a zero-shot prompt containing:
+    </p>
+    <ul>
+      <li>Clear instructions to identify human-object interactions</li>
+      <li>A restricted verb set of 23 verbs (hold, ride, sit on, eat, drink, etc.)</li>
+      <li>Examples of the expected output format</li>
+      <li>JSON output specification</li>
+    </ul>
+
+    <h3>Prompt Used</h3>
+    <blockquote>
+      <span class="small-text">
+        <em>“Analyze this image carefully and identify ALL human-object interactions you can see.</em><br><br>
+        <em>INSTRUCTIONS:</em>
+        <ol>
+          <li><em>Look at each person in the image</em></li>
+          <li><em>Identify what objects they are interacting with</em></li>
+          <li><em>Describe each interaction using the format: “verb object”</em></li>
+          <li><em>You MUST use one of these verbs: hold, ride, sit on, eat, drink, wear, carry, look at, etc.</em></li>
+          <li><em>Be specific about the object (e.g., “bicycle” not “bike”, “laptop” not “computer”)</em></li>
+          <li><em>List ALL interactions you see - a person can have multiple interactions</em></li>
+          <li><em>Only include interactions you can clearly see, not assumptions”</em></li>
+        </ol>
+      </span>
+    </blockquote>
+  </section>
+
+  <section id="evaluation-metrics">
+    <h2>Evaluation Metrics</h2>
+    <p>Predictions were evaluated using:</p>
+    <ul>
+      <li><strong>Precision</strong>: correct predictions / total predictions</li>
+      <li><strong>Recall</strong>: correct predictions / total ground truth</li>
+      <li><strong>F1 Score</strong>: 2 × Precision × Recall / (Precision + Recall)</li>
+    </ul>
+  </section>
+
+  <section id="overall-results">
+    <h2>Overall Results</h2>
+    <p>
+      This appendix contains the complete prediction results for all 20 test images.
+    </p>
+
+    <section id="summary-predictions">
+      <h3>Summary of All Predictions</h3>
+
+      <table>
+        <caption>Table 1: Complete Prediction Results for All 20 Images</caption>
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Ground Truth</th>
+            <th>Prediction</th>
+            <th>F1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0</td>
+            <td>ride train</td>
+            <td>carry bag, look at train, ride train, wear clothing, wear shoes</td>
+            <td>0.33</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>ride boat, row boat, sit on boat</td>
+            <td>hold paddle, sit on kayak, wear vest</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>eat donut, hold donut</td>
+            <td>eat donut, hold donut, wear cap, wear jacket</td>
+            <td>0.67</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>fly kite, hold kite, pull kite</td>
+            <td>hold parachute, wear clothing</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>ride bicycle, sit on bicycle, straddle bicycle</td>
+            <td>carry backpack, hold bicycle, look at cyclist, ride bicycle, run, wear cap, wear helmet, wear shirt, wear shorts, wear sunglasses</td>
+            <td>0.15</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>carry suitcase, hold suitcase, pick up suitcase</td>
+            <td>carry suitcase, wear boots, wear skirt, wear stockings</td>
+            <td>0.29</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>hold bowl, lick bowl</td>
+            <td>hold baby, wear sweater</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>hold motorcycle, race motorcycle, ride motorcycle, sit on motorcycle, straddle motorcycle</td>
+            <td>hold handlebars, ride motorcycle, wear boots, wear gloves, wear helmet, wear racing suit</td>
+            <td>0.18</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>feed giraffe, watch giraffe</td>
+            <td>feed giraffe, hold food</td>
+            <td>0.50</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>hold laptop, read laptop, type on laptop</td>
+            <td>carry bag, hold laptop, wear pants, wear shirt, wear shoes, wear sunglasses</td>
+            <td>0.22</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>hold bicycle, inspect bicycle</td>
+            <td>hold bicycle, hold tools, look at bicycle, ride bicycle, sit on wall, wear helmet, wear jacket, wear shirt</td>
+            <td>0.20</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td>hold remote</td>
+            <td>hold remote, play remote-controlled car, wear cap, wear glasses</td>
+            <td>0.40</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td>eat at dining table, sit at dining table</td>
+            <td>hold bowl, hold cup, sit on chair, wear bracelet, wear scarf, wear shirt</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td>no interaction traffic light</td>
+            <td>ride motorcycle, sit on chair, sit on motorcycle, wear helmet</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td>carry cell phone, talk on cell phone</td>
+            <td>look at towel, wear swim trunks</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td>lie on couch, sit on couch</td>
+            <td>hold person, sit on couch, wear shirt, wear tank top</td>
+            <td>0.33</td>
+          </tr>
+          <tr>
+            <td>16</td>
+            <td>hold person, hug person</td>
+            <td>hold person, wear blouse, wear top</td>
+            <td>0.40</td>
+          </tr>
+          <tr>
+            <td>17</td>
+            <td>hold motorcycle, park motorcycle, sit on motorcycle, straddle motorcycle</td>
+            <td>hold motorcycle, look at motorcycle, sit on motorcycle, wear clothing, wear helmet, wear jacket</td>
+            <td>0.40</td>
+          </tr>
+          <tr>
+            <td>18</td>
+            <td>no interaction bench</td>
+            <td>carry bag, wear clothing</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>19</td>
+            <td>blow cake</td>
+            <td>cut cake, hold knife, look at cake, wear shirt</td>
+            <td>0.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="failure-cases">
+      <h3>Complete List of Failure Cases</h3>
+      <p>
+        Eight images achieved F1 = 0.00 (zero overlap between predictions and ground truth).
+        The complete list is shown below.
+      </p>
+
+      <table>
+        <caption>Table 2: All Failure Cases (F1 = 0.00)</caption>
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Ground Truth</th>
+            <th>Prediction</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>ride boat, row boat, sit on boat</td>
+            <td>hold paddle, sit on kayak, wear vest</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>fly kite, hold kite, pull kite</td>
+            <td>hold parachute, wear clothing</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>hold bowl, lick bowl</td>
+            <td>hold baby, wear sweater</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td>eat at dining table, sit at dining table</td>
+            <td>hold bowl, hold cup, sit on chair, wear bracelet, wear scarf, wear shirt</td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td>no interaction traffic light</td>
+            <td>ride motorcycle, sit on chair, sit on motorcycle, wear helmet</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td>carry cell phone, talk on cell phone</td>
+            <td>look at towel, wear swim trunks</td>
+          </tr>
+          <tr>
+            <td>18</td>
+            <td>no interaction bench</td>
+            <td>carry bag, wear clothing</td>
+          </tr>
+          <tr>
+            <td>19</td>
+            <td>blow cake</td>
+            <td>cut cake, hold knife, look at cake, wear shirt</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="performance-distribution">
+      <h3>Performance Distribution</h3>
+      <p>The distribution of F1 scores across all 20 images is as follows:</p>
+      <ul>
+        <li><strong>F1 = 0.00</strong>: 8 images (40%)</li>
+        <li><strong>0.00 &lt; F1 &lt; 0.30</strong>: 5 images (25%)</li>
+        <li><strong>0.30 ≤ F1 &lt; 0.50</strong>: 5 images (25%)</li>
+        <li><strong>F1 ≥ 0.50</strong>: 2 images (10%)</li>
+      </ul>
+      <p>
+        The majority of images (40%) achieved zero F1 score, indicating significant challenges
+        in zero-shot HOI detection. Only 10% of images achieved F1 scores above 0.50,
+        demonstrating that while the model can identify some interactions correctly, there
+        is substantial room for improvement.
+      </p>
+
+      <h3>Overall Performance (Zero-Shot)</h3>
+      <table>
+        <caption>Table 3: Overall Performance (Zero-Shot)</caption>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Average Precision</td>
+            <td>0.159</td>
+          </tr>
+          <tr>
+            <td>Average Recall</td>
+            <td>0.335</td>
+          </tr>
+          <tr>
+            <td>Average F1 Score</td>
+            <td>0.204</td>
+          </tr>
+          <tr>
+            <td>Success Rate</td>
+            <td>12/20 (60%)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        The model achieved an average F1 score of 0.204, with 12 out of 20 images showing at
+        least one correct prediction. While this performance is modest, it demonstrates that
+        the VLM can identify some interactions in a zero-shot setting without any
+        task-specific training.
+      </p>
+    </section>
+  </section>
+
+  <section id="failure-analysis">
+    <h2>Failure Case Analysis</h2>
+    <p>
+      Eight images were identified where the model achieved F1 = 0.00, meaning zero overlap
+      between predictions and ground truth. Below are the six most representative failure
+      cases analyzed in detail.
+    </p>
+
+    <h3>Failure Case 1: Image 1 &mdash; Kayaking Scene</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_4_3.png" alt="Failure Case 1: Two people in a kayak on water">
+      <figcaption>Figure 1: Failure Case 1 &mdash; Two people in a kayak on water</figcaption>
+    </figure>
+    <p><strong>Ground Truth:</strong> ['ride boat', 'row boat', 'sit on boat']</p>
+    <p><strong>Prediction:</strong> ['hold paddle', 'sit on kayak', 'wear vest']</p>
+    <p><strong>F1 Score:</strong> 0.00</p>
+    <p>
+      <strong>Analysis:</strong> This case demonstrates a lexical mismatch rather than true failure.
+      The model identified “kayak” (specific) while ground truth uses “boat” (generic). The model
+      predicted “hold paddle” (visible and correct) while ground truth says “row boat” (technically
+      incorrect for kayaks). This shows strict string matching penalizes semantically correct answers.
+    </p>
+
+    <h3>Failure Case 2: Image 3 &mdash; Kite Flying</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_4_7.png" alt="Failure Case 2: Person flying a kite">
+      <figcaption>Figure 2: Failure Case 2 &mdash; Person flying a kite</figcaption>
+    </figure>
+    <p><strong>Ground Truth:</strong> ['fly kite', 'hold kite', 'pull kite']</p>
+    <p><strong>Prediction:</strong> ['hold parachute', 'wear clothing']</p>
+    <p><strong>F1 Score:</strong> 0.00</p>
+    <p>
+      <strong>Analysis:</strong> This represents genuine object misidentification. The model confused
+      a kite with a parachute due to visual similarity (both are fabric objects in the air). Once the
+      object is misidentified, all interaction predictions become incorrect.
+    </p>
+
+    <h3>Failure Case 3: Image 6 &mdash; Person with Bowl</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_4_13.png" alt="Failure Case 3: Person holding a bowl">
+      <figcaption>Figure 3: Failure Case 3 &mdash; Person holding a bowl</figcaption>
+    </figure>
+    <p><strong>Ground Truth:</strong> ['hold bowl', 'lick bowl']</p>
+    <p><strong>Prediction:</strong> ['hold baby', 'wear sweater']</p>
+    <p><strong>F1 Score:</strong> 0.00</p>
+    <p>
+      <strong>Analysis:</strong> This is the most severe failure &mdash; complete object hallucination.
+      The model incorrectly identified a bowl as a baby, indicating fundamental visual perception error.
+    </p>
+
+    <h3>Failure Case 4: Image 12 &mdash; Dining Table</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_4_25.png" alt="Failure Case 4: Person at dining table">
+      <figcaption>Figure 4: Failure Case 4 &mdash; Person at dining table</figcaption>
+    </figure>
+    <p><strong>Ground Truth:</strong> ['eat at dining table', 'sit at dining table']</p>
+    <p><strong>Prediction:</strong> ['hold bowl', 'hold cup', 'sit on chair', ...]</p>
+    <p><strong>F1 Score:</strong> 0.00</p>
+    <p>
+      <strong>Analysis:</strong> This shows object granularity mismatch. The model predicted
+      specific objects (bowl, cup, chair) while ground truth uses “dining table”. Different
+      levels of abstraction caused the mismatch.
+    </p>
+
+    <h3>Failure Case 5: Image 13 &mdash; Traffic Scene</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_4_27.png" alt="Failure Case 5: Traffic scene">
+      <figcaption>Figure 5: Failure Case 5 &mdash; Traffic scene</figcaption>
+    </figure>
+    <p><strong>Ground Truth:</strong> ['no interaction traffic light']</p>
+    <p><strong>Prediction:</strong> ['ride motorcycle', 'sit on motorcycle', 'wear helmet']</p>
+    <p><strong>F1 Score:</strong> 0.00</p>
+    <p>
+      <strong>Analysis:</strong> The ground truth states “no interaction” with traffic light,
+      but the model identified actual visible interactions with the motorcycle. This is a dataset
+      annotation issue rather than model failure.
+    </p>
+
+    <h3>Failure Case 6: Image 14 &mdash; Person with Phone</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_4_29.png" alt="Failure Case 6: Person with cell phone">
+      <figcaption>Figure 6: Failure Case 6 &mdash; Person with cell phone</figcaption>
+    </figure>
+    <p><strong>Ground Truth:</strong> ['carry cell phone', 'talk on cell phone']</p>
+    <p><strong>Prediction:</strong> ['look at towel', 'wear swim trunks']</p>
+    <p><strong>F1 Score:</strong> 0.00</p>
+    <p>
+      <strong>Analysis:</strong> The model completely missed the cell phone, likely due to small
+      object size or occlusion, and focused on more salient objects instead.
+    </p>
+
+    <h3>Summary of Failure Reasons</h3>
+    <table>
+      <caption>Table 4: Summary of Failure Modes</caption>
+      <thead>
+        <tr>
+          <th>Failure Type</th>
+          <th>Count</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Object Misidentification</td>
+          <td>3</td>
+          <td>Wrong object identified (kite→parachute, bowl→baby, missed phone)</td>
+        </tr>
+        <tr>
+          <td>Lexical Mismatch</td>
+          <td>2</td>
+          <td>Semantically correct but different words (kayak vs boat, chair vs table)</td>
+        </tr>
+        <tr>
+          <td>Dataset Annotation Issues</td>
+          <td>2</td>
+          <td>Ground truth quality problems (no interaction cases)</td>
+        </tr>
+        <tr>
+          <td>Action Mismatch</td>
+          <td>1</td>
+          <td>Correct object, wrong verb (blow vs cut)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="back-to-top"><a href="#top">↑ Back to top</a></div>
+  </section>
+
+  <section id="improvement-attempts">
+    <h2>Improvement Attempts</h2>
+    <p>
+      To address the failure cases, two improved prompting strategies were tested on the three
+      worst failures.
+    </p>
+
+    <h3>Strategy 1: Few-Shot Learning</h3>
+    <p>
+      A prompt was created with example images and their correct HOI annotations to help the
+      model learn the expected output format and terminology.
+    </p>
+
+    <h3>Strategy 2: Chain-of-Thought Reasoning</h3>
+    <p>
+      The model was asked to reason step-by-step: identify people, identify objects, then
+      determine interactions.
+    </p>
+
+    <h3>Results of Improvement Attempts</h3>
+    <table>
+      <caption>Table 5: Improvement Attempt Results</caption>
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Original</th>
+          <th>Few-Shot</th>
+          <th>CoT</th>
+          <th>Best</th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Image 1 (Kayak)</td>
+          <td>0.00</td>
+          <td>0.67</td>
+          <td>0.00</td>
+          <td>Few-Shot</td>
+          <td>+0.67</td>
+        </tr>
+        <tr>
+          <td>Image 3 (Kite)</td>
+          <td>0.00</td>
+          <td>0.80</td>
+          <td>0.00</td>
+          <td>Few-Shot</td>
+          <td>+0.80</td>
+        </tr>
+        <tr>
+          <td>Image 6 (Bowl)</td>
+          <td>0.00</td>
+          <td>0.00</td>
+          <td>0.00</td>
+          <td>Neither</td>
+          <td>0.00</td>
+        </tr>
+        <tr>
+          <td><strong>Average</strong></td>
+          <td><strong>0.00</strong></td>
+          <td><strong>0.49</strong></td>
+          <td><strong>0.00</strong></td>
+          <td></td>
+          <td><strong>+0.49</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Image 1: Kayak Scene &mdash; FIXED</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_9_1.png" alt="Improvement attempt on Image 1">
+      <figcaption>Figure 7: Improvement attempt on Image 1</figcaption>
+    </figure>
+    <p><strong>Results:</strong></p>
+    <ul>
+      <li><strong>Ground Truth:</strong> ['ride boat', 'row boat', 'sit on boat']</li>
+      <li><strong>Original Prediction:</strong> ['hold paddle', 'sit on kayak', 'wear vest'] (F1: 0.00)</li>
+      <li><strong>Few-Shot Prediction:</strong> ['hold paddle', 'ride boat', 'sit on boat'] (F1: 0.67)</li>
+      <li><strong>Chain-of-Thought Prediction:</strong> ['hold paddle', 'sit on kayak', 'wear life vest'] (F1: 0.00)</li>
+      <li><strong>Best Result:</strong> Few-Shot (Improvement: +0.67)</li>
+    </ul>
+    <p>
+      Few-shot prompting achieved F1 = 0.67 by aligning the model's terminology with ground
+      truth. By providing examples using “boat” instead of “kayak,” the model learned to
+      use the expected generic term. This demonstrates the original failure was due to
+      vocabulary mismatch rather than visual understanding.
+    </p>
+
+    <h3>Image 3: Kite Flying &mdash; FIXED</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_9_3.png" alt="Improvement attempt on Image 3">
+      <figcaption>Figure 8: Improvement attempt on Image 3</figcaption>
+    </figure>
+    <p><strong>Results:</strong></p>
+    <ul>
+      <li><strong>Ground Truth:</strong> ['fly kite', 'hold kite', 'pull kite']</li>
+      <li><strong>Original Prediction:</strong> ['hold parachute', 'wear clothing'] (F1: 0.00)</li>
+      <li><strong>Few-Shot Prediction:</strong> ['fly kite', 'hold kite'] (F1: 0.80)</li>
+      <li><strong>Chain-of-Thought Prediction:</strong> ['hold paraglider', 'look at paraglider'] (F1: 0.00)</li>
+      <li><strong>Best Result:</strong> Few-Shot (Improvement: +0.80)</li>
+    </ul>
+    <p>
+      Few-shot prompting achieved F1 = 0.80 by correcting object misidentification.
+      Providing visual examples helped the model distinguish between kites and parachutes.
+    </p>
+
+    <h3>Image 6: Bowl Scene &mdash; UNSOLVED</h3>
+    <figure>
+      <img src="hoi_part3_files/hoi_part3_9_5.png" alt="Improvement attempt on Image 6">
+      <figcaption>Figure 9: Improvement attempt on Image 6</figcaption>
+    </figure>
+    <p><strong>Results:</strong></p>
+    <ul>
+      <li><strong>Ground Truth:</strong> ['hold bowl', 'lick bowl']</li>
+      <li><strong>Original Prediction:</strong> ['hold baby', 'wear sweater'] (F1: 0.00)</li>
+      <li><strong>Few-Shot Prediction:</strong> ['hold baby', 'wear shirt'] (F1: 0.00)</li>
+      <li><strong>Chain-of-Thought Prediction:</strong> ['hold vase'] (F1: 0.00)</li>
+      <li><strong>Best Result:</strong> Neither (Improvement: 0.00)</li>
+    </ul>
+    <p>
+      Neither strategy improved performance. The model consistently misidentified the bowl,
+      indicating a fundamental visual perception problem that cannot be overcome through
+      prompting alone.
+    </p>
+
+    <div class="back-to-top"><a href="#top">↑ Back to top</a></div>
+  </section>
+
+  <section id="discussion">
+    <h2>Discussion</h2>
+
+    <h3>What Prompting Can Fix</h3>
+    <p>Few-shot prompting is effective for:</p>
+    <ul>
+      <li><strong>Terminology Alignment:</strong> When the model uses different but semantically equivalent terms</li>
+      <li><strong>Ambiguous Object Recognition:</strong> When objects have similar visual features</li>
+    </ul>
+
+    <h3>What Prompting Cannot Fix</h3>
+    <p>Prompt engineering has clear limitations:</p>
+    <ul>
+      <li><strong>Fundamental Visual Errors:</strong> Complete object misidentification</li>
+      <li><strong>Small Object Detection:</strong> Objects too small or occluded</li>
+      <li><strong>Dataset Quality Issues:</strong> Incorrect ground truth annotations</li>
+    </ul>
+
+    <h3>Evaluation Metric Limitations</h3>
+    <p>
+      F1 scores based on strict string matching do not accurately reflect model quality.
+      Several “failures” were cases where the model provided more accurate predictions than
+      ground truth. Better evaluation metrics are needed, such as semantic similarity
+      measures or human evaluation.
+    </p>
+
+    <div class="back-to-top"><a href="#top">↑ Back to top</a></div>
+  </section>
+
+  </section>
+</main>
+
+</body>
+</html>
