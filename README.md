@@ -35,11 +35,14 @@ By replacing classical HOI detection with **Claude Sonnet** as a frontier Vision
 ---
 
 ## 🗂️ Project Structure
+
+```
 VisionStack/
-├── 📓 Part1_OD.ipynb        # SSD implementation + training
-├── 📓 Part2_nms.ipynb       # Custom NMS + torchvision comparison
-├── 📓 hoi_part3.ipynb       # HOI analysis with Claude Sonnet VLM
-└── 📄 Project_3_Report.pdf  # Full methodology + results write-up
+├── 📓 Part1_OD.ipynb          —  SSD implementation + training
+├── 📓 Part2_nms.ipynb         —  Custom NMS + torchvision comparison
+├── 📓 hoi_part3.ipynb         —  HOI analysis with Claude Sonnet VLM
+└── 📄 Project_3_Report.pdf    —  Full methodology + results write-up
+```
 
 ---
 
